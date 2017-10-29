@@ -84,13 +84,13 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
-		} else if isDigit(l.ch) {
-			tok.Type = token.INT
-			tok.Literal = l.readNumber()
-			return tok
-		} else {
-			tok = newToken(token.ILLEGAL, l.ch)
 		}
+		if isDigit(l.ch) {
+			tok.Literal = l.readNumber()
+			tok.Type = token.LookupIdent(tok.Literal)
+			return tok
+		}
+		tok = newToken(token.ILLEGAL, l.ch)
 	}
 
 	l.readChar()
@@ -135,7 +135,7 @@ func (l *Lexer) readIdentifier() string {
 }
 
 func isLetter(ch byte) bool {
-	match, _ := regexp.Match("[a-zA-Z_]", []byte{ch})
+	match, _ := regexp.Match("[0-9a-zA-Z_?]", []byte{ch})
 	return match
 }
 

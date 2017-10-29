@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"fmt"
 	"github.com/onidoru/goemon/token"
 	"testing"
 )
@@ -36,6 +37,7 @@ func TestNextToken(t *testing.T) {
 
   foo += 10;
   bar -= 5;
+	a2r = 2;
 	`
 
 	tests := []struct {
@@ -138,6 +140,10 @@ func TestNextToken(t *testing.T) {
 		{token.SUBTO, "-="},
 		{token.INT, "5"},
 		{token.SEMICOLON, ";"},
+		{token.ILLEGAL, "a2r"},
+		{token.ASSIGN, "="},
+		{token.INT, "2"},
+		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}
 	l := New(input)
@@ -145,8 +151,10 @@ func TestNextToken(t *testing.T) {
 	for i, tt := range tests {
 		tok := l.NextToken()
 
+		fmt.Printf("%v\n", tok.Literal)
+
 		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - tokentype wrong. expected %q, got %q", i, tt.expectedType, tok.Type)
+			t.Fatalf("tests[%d] - tokentype wrong. expected %q, got %q in %q", i, tt.expectedType, tok.Type, tok.Literal)
 		}
 
 		if tok.Literal != tt.expectedLiteral {
