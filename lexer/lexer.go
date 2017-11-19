@@ -28,8 +28,22 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.BANG, l.ch)
 		}
+	case '@':
+		tok = newToken(token.AT, l.ch)
+	case '.':
+		tok = newToken(token.DOT, l.ch)
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
+	case ':':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			tok = token.Token{Type: token.PR, Literal: string(ch) + string(l.ch)}
+		} else {
+			tok = newToken(token.DT, l.ch)
+		}
+	case '#':
+		tok = newToken(token.SHARP, l.ch)
 	case '(':
 		tok = newToken(token.LPAREN, l.ch)
 	case ')':

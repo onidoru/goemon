@@ -24,6 +24,7 @@ const (
 	SEMICOLON = ";"
 	LPAREN    = "("
 	RPAREN    = ")"
+	QUEST     = "?"
 	LBRACE    = "{"
 	RBRACE    = "}"
 	LSQBR     = "["
@@ -43,6 +44,12 @@ const (
 	INC       = "++"
 	ADDTO     = "+="
 	SUBTO     = "-="
+	FOR       = "FOR"
+	PR        = ":="
+	DT        = ":"
+	SHARP     = "#"
+	AT        = "@"
+	DOT       = "."
 )
 
 var keywords = map[string]TokenType{
@@ -53,6 +60,7 @@ var keywords = map[string]TokenType{
 	"if":     IF,
 	"else":   ELSE,
 	"return": RETURN,
+	"for":    FOR,
 }
 
 // LookupIdent chechs the keywords table to see whether the given identifier
@@ -72,7 +80,12 @@ func LookupIdent(ident string) TokenType {
 }
 
 func isWord(s string) bool {
-	for _, r := range s {
+	for n, r := range s {
+		if n == 0 {
+			if r < '0' || r > '9' {
+				return true
+			}
+		}
 		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r != '_') {
 			return false
 		}
