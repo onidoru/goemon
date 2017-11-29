@@ -67,9 +67,9 @@ func (l *Lexer) NextToken() token.Token {
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
 	case '[':
-		tok = newToken(token.LSQBR, l.ch)
+		tok = newToken(token.LBRACKET, l.ch)
 	case ']':
-		tok = newToken(token.RSQBR, l.ch)
+		tok = newToken(token.RBRACKET, l.ch)
 	case '-':
 		if l.peekChar() == '-' {
 			ch := l.ch

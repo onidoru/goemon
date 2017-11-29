@@ -27,8 +27,8 @@ const (
 	QUEST     = "?"
 	LBRACE    = "{"
 	RBRACE    = "}"
-	LSQBR     = "["
-	RSQBR     = "]"
+	LBRACKET  = "["
+	RBRACKET  = "]"
 	LT        = "<"
 	GT        = ">"
 	FUNCTION  = "FUNCTION"
@@ -50,6 +50,9 @@ const (
 	SHARP     = "#"
 	AT        = "@"
 	DOT       = "."
+	THEN      = "then"
+	BEGIN     = "begin"
+	END       = "end"
 )
 
 var keywords = map[string]TokenType{
@@ -61,6 +64,9 @@ var keywords = map[string]TokenType{
 	"else":   ELSE,
 	"return": RETURN,
 	"for":    FOR,
+	"then":   THEN,
+	"begin":  BEGIN,
+	"end":    END,
 }
 
 // LookupIdent chechs the keywords table to see whether the given identifier
