@@ -1,4 +1,3 @@
 ## Goemon
 
-Goemon is a compiler from Ruby language to NASM assembly using Golang.
-In the process of development some large changes, as a grammar and lexic parts of the compiler may occur. 
+Goemon is a C--- interpreter, written in a pure Golang. Kind of same to the Monkey language, but has significant improvements, such as block statements, grammar rules and variable redefinitions.  
