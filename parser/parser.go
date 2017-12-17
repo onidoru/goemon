@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/onidoru/goemon/ast"
 	"github.com/onidoru/goemon/lexer"
-	"github.com/onidoru/goemon/token"
+	token "github.com/onidoru/goemon/token"
 	"strconv"
 )
 
@@ -12,6 +12,8 @@ const (
 	_ int = iota
 	LOWEST
 	EQUALS
+	ADDTO
+	SUBFROM
 	LESSGREATER
 	SUM
 	PRODUCT
@@ -23,6 +25,8 @@ const (
 var precedences = map[token.TokenType]int{
 	token.EQ:       EQUALS,
 	token.NOTEQ:    EQUALS,
+	token.ADDTO:    ADDTO,
+	token.SUBFROM:  SUBFROM,
 	token.LT:       LESSGREATER,
 	token.GT:       LESSGREATER,
 	token.PLUS:     SUM,
@@ -70,6 +74,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
+	p.registerInfix(token.ADDTO, p.parseInfixExpression)
+	p.registerInfix(token.SUBFROM, p.parseInfixExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -137,10 +143,21 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
+	case token.SEMICOLON:
+		return nil
 	case token.LET:
 		return p.parseLetStatement()
+	case token.FLOAT:
+		return p.parseFloatStatement()
+	case token.SHORT:
+		return p.parseShortStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.IDENT:
+		if p.peekTokenIs(token.ASSIGN) {
+			return p.parseIdentifierExpression()
+		}
+		return p.parseExpressionStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -148,10 +165,22 @@ func (p *Parser) parseStatement() ast.Statement {
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
+	var flag = false
+	switch p.curToken.Type {
+	case token.IF:
+		flag = true
+	case token.FUNCTION:
+		flag = true
+	case token.FOR:
+		flag = true
+	}
+
 	defer untrace(trace("parseExpressionStatement", stmt.String()))
 	stmt.Expression = p.parseExpression(LOWEST)
-	if p.peekTokenIs(token.SEMICOLON) {
-		p.nextToken()
+	if !flag {
+		if !p.peekTokenIs(token.SEMICOLON) {
+			p.peekError(token.SEMICOLON)
+		}
 	}
 	return stmt
 }
@@ -259,54 +288,42 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	}
 	p.nextToken()
 	expression.Condition = p.parseExpression(LOWEST)
+	for p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
 	if !p.expectPeek(token.RPAREN) {
 		return nil
 	}
-	if !p.expectPeek(token.LBRACE) {
-		return nil
-	}
-	expression.Consequence = p.parseBlockStatement()
-	if p.peekTokenIs(token.ELSE) {
+
+	if p.peekTokenIs(token.LBRACE) {
 		p.nextToken()
-		if !p.expectPeek(token.LBRACE) {
-			return nil
+		expression.Consequence = p.parseBlockStatement()
+	} else {
+		block := &ast.BlockStatement{Token: p.curToken}
+		block.Statements = []ast.Statement{}
+		p.nextToken()
+		stmt := p.parseStatement()
+		block.Statements = append(block.Statements, stmt)
+		expression.Consequence = block
+	}
+	p.nextToken()
+	if p.curTokenIs(token.ELSE) {
+		if p.peekTokenIs(token.LBRACE) {
+			p.nextToken()
+			expression.Alternative = p.parseBlockStatement()
+		} else {
+			block := &ast.BlockStatement{Token: p.curToken}
+			block.Statements = []ast.Statement{}
+			p.nextToken()
+			stmt := p.parseStatement()
+			block.Statements = append(block.Statements, stmt)
+			expression.Alternative = block
 		}
-		expression.Alternative = p.parseBlockStatement()
 	}
 
 	untrace(trace("parseIfExpression", expression.String()))
 	return expression
 }
-
-// func (p *Parser) parseIfExpression() ast.Expression {
-// 	expression := &ast.IfExpression{Token: p.curToken}
-//
-// 	if !p.expectPeek(token.LPAREN) {
-// 		return nil
-// 	}
-// 	p.nextToken()
-// 	expression.Condition = p.parseExpression(LOWEST)
-// 	if !p.expectPeek(token.RPAREN) {
-// 		return nil
-// 	}
-// 	if !p.expectPeek(token.THEN) {
-// 		return nil
-// 	}
-// 	if !p.expectPeek(token.BEGIN) {
-// 		return nil
-// 	}
-// 	expression.Consequence = p.parseBlockStatement()
-// 	if p.peekTokenIs(token.ELSE) {
-// 		p.nextToken()
-// 		if !p.expectPeek(token.BEGIN) {
-// 			return nil
-// 		}
-// 		expression.Alternative = p.parseBlockStatement()
-// 	}
-//
-// 	untrace(trace("parseIfExpression", expression.String()))
-// 	return expression
-// }
 
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	block := &ast.BlockStatement{Token: p.curToken}
@@ -382,6 +399,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt.ReturnValue = p.parseExpression(LOWEST)
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
+	} else {
+		p.peekError(token.SEMICOLON)
 	}
 	return stmt
 }
@@ -398,6 +417,24 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt.Value = p.parseExpression(LOWEST)
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
+	} else {
+		p.peekError(token.SEMICOLON)
+	}
+	return stmt
+}
+
+func (p *Parser) parseIdentifierExpression() *ast.AssignStatement {
+	stmt := &ast.AssignStatement{Token: p.curToken}
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	} else {
+		p.peekError(token.SEMICOLON)
 	}
 	return stmt
 }
@@ -442,3 +479,104 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 	array.Elements = p.parseExpressionList(token.RBRACKET)
 	return array
 }
+
+func (p *Parser) parseIntStatement() *ast.IntStatement {
+	stmt := &ast.IntStatement{Token: p.curToken}
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	} else {
+		p.peekError(token.SEMICOLON)
+	}
+	return stmt
+}
+
+func (p *Parser) parseShortStatement() *ast.ShortStatement {
+	stmt := &ast.ShortStatement{Token: p.curToken}
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	} else {
+		p.peekError(token.SEMICOLON)
+	}
+	return stmt
+}
+
+func (p *Parser) parseFloatStatement() *ast.FloatStatement {
+	stmt := &ast.FloatStatement{Token: p.curToken}
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	} else {
+		p.peekError(token.SEMICOLON)
+	}
+	return stmt
+}
+
+// func (p *Parser) parseIfExpression() ast.Expression {
+// 	expression := &ast.IfExpression{Token: p.curToken}
+//
+// 	if !p.expectPeek(token.LPAREN) {
+// 		return nil
+// 	}
+// 	p.nextToken()
+// 	expression.Condition = p.parseExpression(LOWEST)
+// 	if !p.expectPeek(token.RPAREN) {
+// 		return nil
+// 	}
+// 	if !p.expectPeek(token.THEN) {
+// 		return nil
+// 	}
+// 	if !p.expectPeek(token.BEGIN) {
+// 		return nil
+// 	}
+// 	expression.Consequence = p.parseBlockStatement()
+// 	if p.peekTokenIs(token.ELSE) {
+// 		p.nextToken()
+// 		if !p.expectPeek(token.LBRACE) {
+// 			return nil
+// 		}
+// 		expression.Alternative = p.parseBlockStatement()
+// 	}
+//
+// 	untrace(trace("parseIfExpression", expression.String()))
+// 	return expression
+// }
+
+// func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+// 	block := &ast.BlockStatement{Token: p.curToken}
+// 	block.Statements = []ast.Statement{}
+// 	p.nextToken()
+// 	for !p.curTokenIs(token.END) {
+// 		stmt := p.parseStatement()
+// 		if stmt != nil {
+// 			block.Statements = append(block.Statements, stmt)
+// 		}
+// 		p.nextToken()
+// 	}
+// 	return block
+// }

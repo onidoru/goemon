@@ -14,22 +14,27 @@ var (
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
+
 	case *ast.Program:
 		return evalProgram(node, env)
+
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
+
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
+
 	case *ast.PrefixExpression:
 		right := Eval(node.Right, env)
 
 		if isError(right) {
 			return right
 		}
-
 		return evalPrefixExpression(node.Operator, right)
+
 	case *ast.InfixExpression:
 		left := Eval(node.Left, env)
 
@@ -42,12 +47,28 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(right) {
 			return right
 		}
+		val := evalInfixExpression(left, node.Operator, right)
+		env.Set(node.Left.String(), val)
+		return val
 
-		return evalInfixExpression(left, node.Operator, right)
+	case *ast.AssignStatement:
+		//val := Eval(node.Value, env)
+		_, ok := env.Get(node.Name.String())
+		if !ok {
+			return newError("identifier not found: %s", node.Name)
+		}
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val)
+
 	case *ast.BlockStatement:
 		return evalBlockStatement(node, env)
+
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
+
 	case *ast.ReturnStatement:
 		val := Eval(node.ReturnValue, env)
 
@@ -56,6 +77,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return &object.ReturnValue{Value: val}
+
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
 		if len(elements) == 1 && isError(elements[0]) {
@@ -64,20 +86,46 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Array{Elements: elements}
 
 	case *ast.LetStatement:
+		_, ok := env.Get(node.Name.String())
+		if ok {
+			return newError("redefinition of: %s", node.Name)
+		}
 		val := Eval(node.Value, env)
-
 		if isError(val) {
 			return val
 		}
-
 		env.Set(node.Name.Value, val)
+
+	case *ast.ShortStatement:
+		_, ok := env.Get(node.Name.String())
+		if ok {
+			return newError("redefinition of: %s", node.Name)
+		}
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val)
+
+	case *ast.FloatStatement:
+		_, ok := env.Get(node.Name.String())
+		if ok {
+			return newError("redefinition of: %s", node.Name)
+		}
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val)
+
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
+
 	case *ast.FunctionLiteral:
 		params := node.Parameters
 		body := node.Body
-
 		return &object.Function{Parameters: params, Env: env, Body: body}
+
 	case *ast.CallExpression:
 		function := Eval(node.Function, env)
 		if isError(function) {
@@ -181,7 +229,6 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 	if ok {
 		return val
 	}
-
 	return newError("identifier not found: %s", node.Value)
 }
 
@@ -242,6 +289,10 @@ func evalIntegerInfixExpression(left object.Object, operator string, right objec
 		return &object.Integer{Value: leftVal / rightVal}
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}
+	case "+=":
+		return &object.Integer{Value: leftVal + rightVal}
+	case "-=":
+		return &object.Integer{Value: leftVal - rightVal}
 	case "==":
 		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":
@@ -328,6 +379,7 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 }
 
 func newError(format string, a ...interface{}) *object.Error {
+	// format = "Error is found"
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
 

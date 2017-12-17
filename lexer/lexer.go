@@ -35,13 +35,7 @@ func (l *Lexer) NextToken() token.Token {
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case ':':
-		if l.peekChar() == '=' {
-			ch := l.ch
-			l.readChar()
-			tok = token.Token{Type: token.PR, Literal: string(ch) + string(l.ch)}
-		} else {
-			tok = newToken(token.DT, l.ch)
-		}
+		tok = newToken(token.DT, l.ch)
 	case '#':
 		tok = newToken(token.SHARP, l.ch)
 	case '(':
@@ -62,10 +56,12 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.PLUS, l.ch)
 		}
+
 	case '{':
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+
 	case '[':
 		tok = newToken(token.LBRACKET, l.ch)
 	case ']':
@@ -78,7 +74,7 @@ func (l *Lexer) NextToken() token.Token {
 		} else if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
-			tok = token.Token{Type: token.SUBTO, Literal: string(ch) + string(l.ch)}
+			tok = token.Token{Type: token.SUBFROM, Literal: string(ch) + string(l.ch)}
 		} else {
 			tok = newToken(token.MINUS, l.ch)
 		}

@@ -31,6 +31,42 @@ func (p *Program) TokenLiteral() string {
 	}
 }
 
+type IntStatement struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (ls *IntStatement) statementNode() {}
+
+func (ls *IntStatement) TokenLiteral() string {
+	return ls.Token.Literal
+}
+
+type FloatStatement struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (ls *FloatStatement) statementNode() {}
+
+func (ls *FloatStatement) TokenLiteral() string {
+	return ls.Token.Literal
+}
+
+type ShortStatement struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (ls *ShortStatement) statementNode() {}
+
+func (ls *ShortStatement) TokenLiteral() string {
+	return ls.Token.Literal
+}
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -40,6 +76,42 @@ type LetStatement struct {
 func (ls *LetStatement) statementNode() {}
 
 func (ls *LetStatement) TokenLiteral() string {
+	return ls.Token.Literal
+}
+
+// type AddTo struct {
+// 	Token token.Token
+// 	Name  *Identifier
+// 	Value Expression
+// }
+//
+// func (ls *AddTo) statementNode() {}
+//
+// func (ls *AddTo) TokenLiteral() string {
+// 	return ls.Token.Literal
+// }
+//
+// type SubFrom struct {
+// 	Token token.Token
+// 	Name  *Identifier
+// 	Value Expression
+// }
+//
+// func (ls *SubFrom) statementNode() {}
+//
+// func (ls *SubFrom) TokenLiteral() string {
+// 	return ls.Token.Literal
+// }
+
+type AssignStatement struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (ls *AssignStatement) statementNode() {}
+
+func (ls *AssignStatement) TokenLiteral() string {
 	return ls.Token.Literal
 }
 
@@ -95,6 +167,67 @@ func (ls *LetStatement) String() string {
 	out.WriteString(";")
 	return out.String()
 }
+
+func (ls *AssignStatement) String() string {
+	var out bytes.Buffer
+	// out.WriteString(ls.TokenLiteral() + " ")
+	out.WriteString(ls.Name.String())
+	out.WriteString(" = ")
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
+func (ls *FloatStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString(ls.TokenLiteral() + " ")
+	out.WriteString(ls.Name.String())
+	out.WriteString(" = ")
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
+func (ls *IntStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString(ls.TokenLiteral() + " ")
+	out.WriteString(ls.Name.String())
+	out.WriteString(" = ")
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
+func (ls *ShortStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString(ls.TokenLiteral() + " ")
+	out.WriteString(ls.Name.String())
+	out.WriteString(" = ")
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
+// func (ls *SubFrom) String() string {
+// 	var out bytes.Buffer
+// 	// out.WriteString(ls.TokenLiteral() + " ")
+// 	out.WriteString(ls.Name.String())
+// 	out.WriteString(" -= ")
+// 	if ls.Value != nil {
+// 		out.WriteString(ls.Value.String())
+// 	}
+// 	out.WriteString(";")
+// 	return out.String()
+// }
+
 func (rs *ReturnStatement) String() string {
 	var out bytes.Buffer
 	out.WriteString(rs.TokenLiteral() + " ")
@@ -189,6 +322,7 @@ type IfExpression struct {
 	Token       token.Token // The 'if' token
 	Condition   Expression
 	Consequence *BlockStatement
+	// Expr        *ExpressionStatement
 	Alternative *BlockStatement
 }
 

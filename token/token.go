@@ -14,7 +14,7 @@ const (
 	EOF       = "EOF"
 	IDENT     = "IDENT"
 	INT       = "INT"
-	ASSIGN    = "="
+	ASSIGN    = ":="
 	PLUS      = "+"
 	MINUS     = "-"
 	BANG      = "!"
@@ -43,16 +43,18 @@ const (
 	DEC       = "--"
 	INC       = "++"
 	ADDTO     = "+="
-	SUBTO     = "-="
+	SUBFROM   = "-="
 	FOR       = "FOR"
 	PR        = ":="
 	DT        = ":"
 	SHARP     = "#"
 	AT        = "@"
 	DOT       = "."
-	THEN      = "then"
-	BEGIN     = "begin"
-	END       = "end"
+	THEN      = "THEN"
+	BEGIN     = "BEGIN"
+	END       = "END"
+	FLOAT     = "FLOAT"
+	SHORT     = "SHORT"
 )
 
 var keywords = map[string]TokenType{
@@ -67,6 +69,9 @@ var keywords = map[string]TokenType{
 	"then":   THEN,
 	"begin":  BEGIN,
 	"end":    END,
+	"int":    INT,
+	"short":  SHORT,
+	"float":  FLOAT,
 }
 
 // LookupIdent chechs the keywords table to see whether the given identifier
