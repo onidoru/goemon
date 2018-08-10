@@ -2,7 +2,7 @@ package ast
 
 import (
 	"bytes"
-	"github.com/onidoru/goemon/token"
+	"github.com/Onidoru/goemon/token"
 	"strings"
 )
 

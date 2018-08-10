@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"github.com/onidoru/goemon/token"
+	"github.com/Onidoru/goemon/token"
 	"regexp"
 )
 

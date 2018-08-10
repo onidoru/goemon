@@ -3,7 +3,7 @@ package object
 import (
 	"bytes"
 	"fmt"
-	"github.com/onidoru/goemon/ast"
+	"github.com/Onidoru/goemon/ast"
 	"strings"
 )
 

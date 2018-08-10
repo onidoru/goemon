@@ -1,9 +1,9 @@
 package evaluator
 
 import (
-	"github.com/onidoru/goemon/lexer"
-	"github.com/onidoru/goemon/object"
-	"github.com/onidoru/goemon/parser"
+	"github.com/Onidoru/goemon/lexer"
+	"github.com/Onidoru/goemon/object"
+	"github.com/Onidoru/goemon/parser"
 	"testing"
 )
 

@@ -2,8 +2,8 @@ package evaluator
 
 import (
 	"fmt"
-	"github.com/onidoru/goemon/ast"
-	"github.com/onidoru/goemon/object"
+	"github.com/Onidoru/goemon/ast"
+	"github.com/Onidoru/goemon/object"
 )
 
 var (
@@ -52,7 +52,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return val
 
 	case *ast.AssignStatement:
-		//val := Eval(node.Value, env)
 		_, ok := env.Get(node.Name.String())
 		if !ok {
 			return newError("identifier not found: %s", node.Name)

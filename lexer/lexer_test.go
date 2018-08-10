@@ -2,7 +2,7 @@ package lexer
 
 import (
 	"fmt"
-	"github.com/onidoru/goemon/token"
+	"github.com/Onidoru/goemon/token"
 	"testing"
 )
 

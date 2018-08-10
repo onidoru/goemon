@@ -1,7 +1,7 @@
 package ast
 
 import (
-	"github.com/onidoru/goemon/token"
+	"github.com/Onidoru/goemon/token"
 	"testing"
 )
 
